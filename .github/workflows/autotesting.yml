@@ -15,24 +15,30 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Fetch full history to avoid shallow clone issues
 
       - name: Configure Git
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      - name: Fetch all branches
-        run: git fetch --all
+      - name: Fetch all branches and remote references
+        run: git fetch --all --prune
 
-      - name: Checkout testing branch
+      - name: Checkout the testing branch
         run: git checkout testing
+
+      - name: Check if there are changes to merge
+        run: |
+          git fetch origin
+          git diff --exit-code origin/testing..origin/staging || echo "There are changes to merge."
 
       - name: Merge staging into testing
         run: |
-          git merge staging --no-ff -m "Auto-merged staging into testing"
+          git merge origin/staging --no-ff -m "Auto-merged staging into testing"
           git push origin testing
 
-      - name: Verify merge
+      - name: Verify the merge
         run: |
           git log -n 1 --oneline
+          git diff origin/testing
