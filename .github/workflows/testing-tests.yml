@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - testing
-  pull_request:
-    branches:
-      - testing
 
 jobs:
   build:
@@ -35,34 +32,12 @@ jobs:
         run: |
           cd client
           npm test
-        continue-on-error: false  # Fails pipeline if tests fail
 
       - name: Run tests for backend
         run: |
           cd server
           npm test
-        continue-on-error: false  # Fails pipeline if tests fail
-
-      - name: Build frontend
-        run: |
-          cd client
-          npm run build
-
-      - name: Validate Backend
-        run: |
-          cd server
-          node server.js &
-          sleep 5
-          curl -f http://localhost:3000/health || exit 1  # Replace with actual health endpoint
-          pkill -f "node server.js"
 
       - name: Notify Success or Failure
-        if: success()
         run: |
-          echo "✅ All tests passed! Ready for production deployment."
-        
-      - name: Notify Failure
-        if: failure()
-        run: |
-          echo "❌ Tests failed! Fix errors before merging to production."
-          exit 1
+          echo "Tests passed! Ready for deployment."

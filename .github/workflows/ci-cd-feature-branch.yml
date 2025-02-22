@@ -1,10 +1,8 @@
-name: CI/CD for Feature Branches
+name: CI for Feature Branches
 
 on:
   push:
     branches:
-      - staging
-      - testing
       - frontend-1
       - frontend-2
       - backend-1
@@ -33,38 +31,29 @@ jobs:
           cd server
           npm install
 
+      - name: Run tests for frontend
+        run: |
+          cd client
+          npm test
+
+      - name: Run tests for backend
+        run: |
+          cd server
+          npm test
+
       - name: Build frontend
         run: |
           cd client
           npm run build
 
-      - name: Set Git user configuration
+      - name: Merge feature branch into staging (If Tests Pass)
         run: |
-          git config --global user.name "Ketan-Chaudhary"
-          git config --global user.email "ketanchaudharypoonia@gmail.com" # Correct email
-
-      - name: Merge feature branch into staging
-        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
           git fetch origin staging
           git checkout staging
-          git merge ${{ github.head_ref }} --no-ff --allow-unrelated-histories -m "Merge feature branch into staging"
-          git push origin staging
-
-      - name: Create a commit status for feature branch merge
-        run: |
-          echo "✅ Feature branch merged successfully into staging."
-
-      - name: Create Pull Request
-        run: |
-          gh pr create --title "Auto Merge: ${{ github.head_ref }} to staging" \
-            --body "Merging feature branch ${{ github.head_ref }} into staging." \
-            --base staging --head ${{ github.head_ref }}
+          git merge ${{ github.head_ref }} --no-ff --allow-unrelated-histories -m "Auto-merge ${{ github.head_ref }} into staging"
+          git push https://github-actions:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} staging
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Approve Pull Request
-        run: |
-          pr_number=$(gh pr list --state open --base staging --head ${{ github.head_ref }} --json number -q '.[0].number')
-          gh pr review $pr_number --approve
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
