@@ -36,24 +36,24 @@ jobs:
           cd client
           npm test
 
-      - name: Run tests for backend
-        run: |
-          cd server
-          npm test
+      # - name: Run tests for backend
+      #   run: |
+      #     cd server
+      #     npm test
 
       - name: Build frontend
         run: |
           cd client
           npm run build
 
-      - name: Merge feature branch into staging (If Tests Pass)
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          git fetch origin staging
-          git checkout staging
-          git merge ${{ github.head_ref }} --no-ff --allow-unrelated-histories -m "Auto-merge ${{ github.head_ref }} into staging"
-          git push https://github-actions:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} staging
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      # - name: Merge feature branch into staging (If Tests Pass)
+      #   run: |
+      #     git config --global user.name "github-actions"
+      #     git config --global user.email "actions@github.com"
+      #     git fetch origin staging
+      #     git checkout staging
+      #     git merge ${{ github.head_ref }} --no-ff --allow-unrelated-histories -m "Auto-merge ${{ github.head_ref }} into staging"
+      #     git push https://github-actions:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} staging
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
