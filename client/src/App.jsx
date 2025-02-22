@@ -1,7 +1,7 @@
 import React from "react";
 import DiseaseDetectionForm from "./components/DiseaseDetectionForm";
 
-//test hindustan
+//test Indiaaaaa
 
 const App = () => {
   return (
