@@ -1,0 +1,26 @@
+name: Merge Staging to Testing
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions@github.com"
+
+      - name: Merge Staging into Testing
+        run: |
+          git checkout testing
+          git merge origin/staging --no-edit
+          git push origin testing
