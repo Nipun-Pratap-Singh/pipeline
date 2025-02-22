@@ -1,0 +1,57 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code from GitHub
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Ensure all branches are merged before deploying
+      - name: Merge staging and testing into main
+        run: |
+          git fetch origin
+          git checkout main
+          git merge --no-ff origin/testing -m "Merging testing into main"
+          git push origin main
+
+      # Step 3: Set up SSH and configure private key to connect to EC2
+      - name: Decode EC2 SSH Private Key
+        run: |
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" | base64 --decode > private_key.pem
+          chmod 600 private_key.pem  # Set the correct permissions for the private key
+
+      # Step 4: SSH into EC2 and deploy the updated code
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+            set -e  # Exit on error
+            echo "🔄 Pulling latest code..."
+            cd ~/AgriHealthAnalyzer || { echo "Repository not found, cloning..."; git clone https://github.com/Ketan-Chaudhary/AgriHealthAnalyzer.git && cd AgriHealthAnalyzer; }
+            git pull origin main
+
+            echo "🛠 Installing frontend dependencies & building..."
+            cd ~/AgriHealthAnalyzer/client
+            npm install
+            npm run build  # Build frontend (Vite React)
+            sudo rm -rf /var/www/html/*
+            sudo cp -r ~/AgriHealthAnalyzer/client/dist/* /var/www/html/
+            sudo systemctl restart nginx
+
+            echo "⚙️ Restarting backend..."
+            cd ~/AgriHealthAnalyzer/server
+            npm install
+            pm2 restart backend || pm2 start server.js --name backend
+            pm2 save
+          EOF
+
+      # Step 5: Clean up private key
+      - name: Clean up private key
+        run: rm -f private_key.pem

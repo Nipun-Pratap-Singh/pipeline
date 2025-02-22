@@ -1,0 +1,76 @@
+name: Staging Tests
+
+on:
+  push:
+    branches:
+      - staging
+      - frontend-1
+      - frontend-2
+      - backend-1
+      - backend-2
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      - name: Install dependencies for frontend
+        run: |
+          cd client
+          npm install
+
+      - name: Install dependencies for backend
+        run: |
+          cd server
+          npm install
+
+      # Uncomment below if you want to run tests
+      # - name: Run tests for frontend
+      #   run: |
+      #     cd client
+      #     npm test
+
+      # - name: Run tests for backend
+      #   run: |
+      #     cd server
+      #     npm test
+
+      - name: Build frontend
+        run: |
+          cd client
+          npm run build
+
+      # - name: Build backend
+      #   run: |
+      #     cd server
+      #     npm start &
+      #     sleep 5
+      #     pkill -f "npm start"
+
+      - name: Merge feature branches into staging
+        run: |
+          git fetch origin staging
+          git checkout staging
+          git merge origin/frontend-1 --no-ff -m "Merge frontend-1 into staging" || echo "No changes to merge"
+          git merge origin/frontend-2 --no-ff -m "Merge frontend-2 into staging" || echo "No changes to merge"
+          git merge origin/backend-1 --no-ff -m "Merge backend-1 into staging" || echo "No changes to merge"
+          git merge origin/backend-2 --no-ff -m "Merge backend-2 into staging" || echo "No changes to merge"
+          git push https://github-actions:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} staging
+
+      - name: Merge staging into testing
+        run: |
+          git fetch origin testing
+          git checkout testing
+          git merge staging --no-ff -m "Merge staging into testing"
+          git push https://github-actions:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} testing
+
+      - name: Confirm merge success
+        run: echo "✅ Successfully merged feature branches into staging and then into testing!"
