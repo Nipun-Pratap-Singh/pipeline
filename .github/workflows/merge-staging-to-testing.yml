@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   merge:
@@ -15,19 +16,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensures full history is available
+          fetch-depth: 0
 
       - name: Configure Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions@github.com"
 
-      - name: Fetch all branches
-        run: |
-          git fetch origin
+      - name: Fetch All Branches
+        run: git fetch origin
 
       - name: Merge Staging into Testing
         run: |
           git checkout testing
-          git merge origin/staging --no-edit
+          git merge origin/staging --no-edit || echo "Already up to date"
           git push origin testing
