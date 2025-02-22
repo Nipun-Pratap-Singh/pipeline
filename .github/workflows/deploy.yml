@@ -15,12 +15,12 @@ jobs:
         uses: actions/checkout@v3
 
       # Step 2: Ensure all branches are merged before deploying
-      - name: Merge staging and testing into main
-        run: |
-          git fetch origin
-          git checkout main
-          git merge --no-ff origin/testing -m "Merging testing into main"
-          git push origin main
+      # - name: Merge staging and testing into main
+      #   run: |
+      #     git fetch origin
+      #     git checkout main
+      #     git merge --no-ff origin/testing -m "Merging testing into main"
+      #     git push origin main
 
       # Step 3: Set up SSH and configure private key to connect to EC2
       - name: Decode EC2 SSH Private Key
@@ -34,19 +34,19 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
             set -e  # Exit on error
             echo "🔄 Pulling latest code..."
-            cd ~/AgriHealthAnalyzer || { echo "Repository not found, cloning..."; git clone https://github.com/Ketan-Chaudhary/AgriHealthAnalyzer.git && cd AgriHealthAnalyzer; }
+            cd ~/AgriHealthAnalyzer || { echo "Repository not found, cloning..."; git clone https://github.com/Nipun-Pratap-Singh/pipeline.git && cd pipeline; }
             git pull origin main
 
             echo "🛠 Installing frontend dependencies & building..."
-            cd ~/AgriHealthAnalyzer/client
+            cd ~/pipeline/client
             npm install
             npm run build  # Build frontend (Vite React)
             sudo rm -rf /var/www/html/*
-            sudo cp -r ~/AgriHealthAnalyzer/client/dist/* /var/www/html/test
+            sudo cp -r ~/pipeline/client/dist/* /var/www/html/test
             sudo systemctl restart nginx
 
             echo "⚙️ Restarting backend..."
-            cd ~/AgriHealthAnalyzer/server
+            cd ~/pipeline/server
             npm install
             pm2 restart backend || pm2 start server.js --name backend
             pm2 save
